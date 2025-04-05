@@ -77,7 +77,6 @@ int KillTheGGApp(wchar_t *processName) {
 		wprintf(L"\nSpyware Killer Failed!\n");
 	}
 	CloseHandle(hSnapshot);
-	KillTheGGProxy();
 	return 0;
 }
 
@@ -89,11 +88,16 @@ int HotspotInit() {
 	credential.Password(PASS);
 	auto conf = winrt::Windows::Networking::NetworkOperators::NetworkOperatorTetheringAccessPointConfiguration();
 	tetheringManager.StopTetheringAsync();
-	tetheringManager.DisableNoConnectionsTimeoutAsync();
-	conf.Band(winrt::Windows::Networking::NetworkOperators::TetheringWiFiBand::TwoPointFourGigahertz);
 	conf.Ssid(SSID);
 	conf.Passphrase(credential.Password());
 	tetheringManager.ConfigureAccessPointAsync(conf);
+	try {
+		tetheringManager.DisableNoConnectionsTimeoutAsync();
+		conf.Band(winrt::Windows::Networking::NetworkOperators::TetheringWiFiBand::TwoPointFourGigahertz);
+		tetheringManager.ConfigureAccessPointAsync(conf);
+	} catch (...) {
+		wprintf(L"\nDisabling No Connection Timeouts and/or Changing Hotspot Wireless Band to 2.4 GHz Failed!\nIs this device running at least Windows 10 Build 19041 or later?\n");
+	}
 	return 0;
 }
 
@@ -115,9 +119,10 @@ int TryAllInit() {
 			try {
 				HotspotPwrOn();
 				try {
-					KillTheGGApp(L"TheGoGuardianApp.exe");
+					KillTheGGProxy();
 					KillTheGGApp(L"AppMonitor.exe");
 					// KillTheGGApp(L"ElevationService.exe");
+					KillTheGGApp(L"TheGoGuardianApp.exe");
 				} catch (...) {
 					wprintf(L"\nSpyware Killer Initialization Failed!\n");
 				}
@@ -129,9 +134,10 @@ int TryAllInit() {
 		wprintf(L"\nHotspot Initialization Failed!\n");
 		while (true) {
 			try {
-				KillTheGGApp(L"TheGoGuardianApp.exe");
+				KillTheGGProxy();
 				KillTheGGApp(L"AppMonitor.exe");
-				// KillTheGGApp(L"ElevationService.exe");
+				// KillTheGGApp(L"ElevationService.exe")
+				KillTheGGApp(L"TheGoGuardianApp.exe");;
 			} catch (...) {
 				wprintf(L"\nSpyware Killer Initialization Failed!\n");;
 			}
